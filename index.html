@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Zoomable Image</title>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+    }
+
+    #image-container {
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    #image-container img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      cursor: zoom-in;
+      transition: transform 0.2s ease-in-out;
+    }
+  </style>
+</head>
+<body>
+  <div id="image-container">
+    <img src="your-image.jpg" alt="Zoomable Image" id="zoom-image">
+  </div>
+
+  <script>
+    const imageContainer = document.getElementById("image-container");
+    const zoomImage = document.getElementById("zoom-image");
+    let scale = 1;
+    const zoomSpeed = 0.1;
+
+    imageContainer.addEventListener("wheel", (e) => {
+      e.preventDefault();
+      const cursorX = e.clientX - imageContainer.getBoundingClientRect().left;
+      const cursorY = e.clientY - imageContainer.getBoundingClientRect().top;
+
+      const direction = e.deltaY > 0 ? -1 : 1;
+
+      if (direction === 1) {
+        // Zoom in
+        scale = Math.min(scale + zoomSpeed, 2); // Adjust the max zoom level (2 in this case)
+      } else {
+        // Zoom out
+        scale = Math.max(scale - zoomSpeed, 1); // Minimum scale is 1 (original size)
+      }
+
+      const offsetX = (cursorX - (cursorX / scale)) / scale;
+      const offsetY = (cursorY - (cursorY / scale)) / scale;
+
+      zoomImage.style.transformOrigin = `${cursorX}px ${cursorY}px`;
+      zoomImage.style.transform = `scale(${scale}) translate(${offsetX}px, ${offsetY}px)`;
+    });
+  </script>
+</body>
+</html>
