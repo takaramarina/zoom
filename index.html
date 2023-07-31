@@ -14,7 +14,8 @@
       display: block;
       margin: 0 auto; /* Center the canvas horizontally */
       background: #fff;
-      width: 120vw; /*might compromise quality to have this too big*/
+      width: 100vw;
+      /*height: 100vh;*/
       border: none; /* Remove border */
     }
   </style>
@@ -29,8 +30,22 @@
     }	
 
     const canvas = document.getElementsByTagName('canvas')[0];
-    canvas.width = 800;
-    canvas.height = 800;
+    
+    // change to actual dimensions of the images for smooth zooming
+    canvas.width = 1000;
+    canvas.height = 1500;
+
+    const images = [
+      '9.jpg',
+      'jjk.jpg'
+      // Add more image paths here...
+    ];
+
+    const scaleFactorBase = 1.1;
+    const zoomThresholdIn = 5; // Adjust the zoom in threshold
+    const zoomThresholdOut = 0.3; // Adjust the zoom out threshold
+    let currentZoomLevel = 1.0;
+    let currentImageIndex = 0;
 
     const gkhead = new Image();
     const event_start = hasTouch() ? 'touchstart' : 'mousedown',
@@ -83,14 +98,35 @@
         if (!dragged) zoom(evt.shiftKey ? -1 : 1);
       }, false);
 
-      const scaleFactor = 1.1;
-
       const zoom = function(clicks) {
         const pt = ctx.transformedPoint(lastX, lastY);
+        const scaleFactor = Math.pow(scaleFactorBase, clicks);
+
+        // Adjust zoom transformation origin to the cursor position
         ctx.translate(pt.x, pt.y);
-        const factor = Math.pow(scaleFactor, clicks);
-        ctx.scale(factor, factor);
+        ctx.scale(scaleFactor, scaleFactor);
         ctx.translate(-pt.x, -pt.y);
+
+        const newPt = ctx.transformedPoint(lastX, lastY);
+
+        // Adjust translation to keep the zoom centered
+        ctx.translate(newPt.x - pt.x, newPt.y - pt.y);
+
+        // Update current zoom level based on the zoom factor
+        currentZoomLevel *= scaleFactor;
+
+        // Check if the zoom level crosses the thresholds to change images
+        if (currentZoomLevel > zoomThresholdIn) {
+          currentImageIndex = (currentImageIndex + 1) % images.length;
+          currentZoomLevel = 1.0; // Reset zoom level for the new image
+          ctx.setTransform(1, 0, 0, 1, 0, 0); // Reset the transformation matrix
+        } else if (currentZoomLevel < zoomThresholdOut) {
+          currentImageIndex = (currentImageIndex - 1 + images.length) % images.length;
+          currentZoomLevel = 1.0; // Reset zoom level for the new image
+          ctx.setTransform(1, 0, 0, 1, 0, 0); // Reset the transformation matrix
+        }
+
+        gkhead.src = images[currentImageIndex];
         redraw();
       };
 
@@ -104,7 +140,7 @@
       canvas.addEventListener('mousewheel', handleScroll, false);
     };
 
-    gkhead.src = '9.jpg';
+    gkhead.src = images[currentImageIndex];
 
     // Adds ctx.getTransform() - returns an SVGMatrix
     // Adds ctx.transformedPoint(x,y) - returns an SVGPoint
